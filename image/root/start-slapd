@@ -23,6 +23,11 @@ function prepare_slapd_conf() {
     printf "root DN is $rootdn\n";
 }
 
+if [ -z $LDAP_ROOT ] ; then
+    printf "\n\nLDAP_ROOT is not defined!\n"
+    exit 1
+fi
+
 if [ -z $LDAP_DOMAIN ] ; then
     printf "\n\nLDAP_DOMAIN is not defined!\n"
     exit 1
@@ -280,8 +285,8 @@ function slapd_init_with_replication(){
 function slapd_init_as_master(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
-    #ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=Manager,cn=config"
-    #ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=Manager,cn=config"
+    #ldapadd_ldif_import "/tmp/ldap-init-replica-master" "cn=$LDAP_ROOT,cn=config"
+    #ldapadd_ldif_import "/tmp/ldap-init-replicator-base" "cn=$LDAP_ROOT,cn=config"
     slapadd_ldif_import "/tmp/ldap-init-replica-master" "-n 2"
     slapadd_ldif_import "/tmp/ldap-init-replicator-base" "-n 2"
 }
@@ -289,7 +294,7 @@ function slapd_init_as_master(){
 function slapd_init_as_slave(){
     local basedn
     basedn="dc=`echo $LDAP_DOMAIN | sed 's/^\.//; s/\.$//; s/\./,dc=/g'`"
-    ldapmodify_ldif_import "/tmp/ldap-init-replica-cunsumer" "cn=Manager,cn=config"
+    ldapmodify_ldif_import "/tmp/ldap-init-replica-cunsumer" "cn=$LDAP_ROOT,cn=config"
 }
 ########################################
 ## Main of script
@@ -331,7 +336,7 @@ do
 done
 
 if [ $firsttime -eq 1 ]; then
-    ldap_additional_ldifs_import "cn=Manager,cn=config"
+    ldap_additional_ldifs_import "cn=$LDAP_ROOT,cn=config"
     if [ "$LDAP_IS_MASTER" == "true" ]; then
         #slapd_init_as_master
         echo ""
